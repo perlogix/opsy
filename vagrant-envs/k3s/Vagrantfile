@@ -1,0 +1,97 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+    config.vm.box = "ubuntu/focal64"
+    config.vm.hostname = "k3s"
+    config.vm.network "forwarded_port", guest: 4443, host: 4443, auto_correct: true
+    config.vm.network "forwarded_port", guest: 443, host: 8443, auto_correct: true
+    config.vm.network "forwarded_port", guest: 3000, host: 3000, auto_correct: true
+    config.vm.network "forwarded_port", guest: 5000, host: 5000, auto_correct: true
+    config.vm.network "forwarded_port", guest: 80, host: 8080, auto_correct: true
+    config.vm.network "forwarded_port", guest: 8080, host: 8888, auto_correct: true
+    config.vm.network "forwarded_port", guest: 8000, host: 8000, auto_correct: true
+    config.vm.network "forwarded_port", guest: 8001, host: 8001, auto_correct: true
+    config.vm.network "forwarded_port", guest: 6443, host: 6443, auto_correct: true
+    config.vm.network "forwarded_port", guest: 9000, host: 9000, auto_correct: true
+    config.vm.provider "virtualbox" do |v|
+        v.name = "k3s"
+        v.memory = 6144
+        v.cpus = 4
+        v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+        v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        v.customize ["modifyvm", :id, "--uartmode1", "file", File::NULL]
+    end
+
+    config.vm.provision "shell", inline: <<-SHELL
+apt-get update -y
+apt-get install -y curl
+curl -LO https://raw.githubusercontent.com/perlogix/opsy/main/linux-ops/install.sh
+chmod 0755 ./install.sh
+./install.sh
+
+if [[ $(curl -s http://169.254.169.254/latest/meta-data/public-hostname) != "" ]]; then
+  IPorFQDN="$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)"
+else
+  IPorFQDN="127.0.0.1"
+fi
+
+curl -sSL https://get.docker.com/ | sh
+
+echo '{ "insecure-registries":["127.0.0.1:5000","localhost:5000","0.0.0.0/0"] }' >/etc/docker/daemon.json
+
+systemctl enable docker
+systemctl restart docker
+
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--docker" sh -s -
+cat <<EOF >/etc/rancher/k3s/registries.yaml
+mirrors:
+  "localhost:5000":
+    endpoint:
+      - "http://localhost:5000"
+  "$IPorFQDN:5000":
+    endpoint:
+      - "http://$IPorFQDN:5000"
+EOF
+systemctl enable k3s
+systemctl restart k3s
+
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+chmod -f 700 get_helm.sh
+./get_helm.sh
+helm repo add stable https://charts.helm.sh/stable
+helm repo update
+
+kubectl create -f /vagrant/insecure_dashboard.yaml
+nohup kubectl proxy --address='0.0.0.0' --accept-hosts='^*$' 0<&- &>/root/proxy.log &
+
+cat <<EOF >/etc/rc.local
+#!/bin/sh
+nohup kubectl proxy --address='0.0.0.0' --accept-hosts='^*$' 0<&- &>/root/proxy.log &
+EOF
+
+chmod -f 0755 /etc/rc.local
+
+if [[ -d "/vagrant" ]]; then
+  cp -f /etc/rancher/k3s/k3s.yaml /vagrant/kubeconfig
+fi
+
+echo "ip_or_fqdn: $IPorFQDN" >/root/INFO
+echo "kube_dashboard: http://$IPorFQDN:8001/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/#/login" >>/root/INFO
+echo "kube_config: /etc/rancher/k3s/k3s.yaml" >>/root/INFO
+echo "helm_version: $(helm version --short)" >>/root/INFO
+echo "docker_version: $(docker version | grep Version | awk '{ print $2 }' | head -n 1)" >>/root/INFO
+kubectl version --short >>/root/INFO
+cp -f /root/INFO /
+cp -f /INFO /vagrant/
+
+cat <<EOF >>/etc/environment
+KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+EOF
+
+cat <<EOF >/etc/profile.d/myenv.sh
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+EOF
+
+SHELL
+end

@@ -1,0 +1,21 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+    config.vm.box = "gbailey/amzn2"
+    config.vm.hostname = "amzn2"
+    config.vm.provider "virtualbox" do |v|
+        v.name = "amzn2"
+        v.memory = 4096
+        v.cpus = 2
+        v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+        v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        v.customize ["modifyvm", :id, "--uartmode1", "file", File::NULL]
+    end
+    config.vm.provision "shell", inline: <<-SHELL
+    yum install -y curl
+    curl -LO https://raw.githubusercontent.com/perlogix/opsy/main/linux-ops/install.sh
+    chmod 0755 ./install.sh
+    ./install.sh
+SHELL
+end
