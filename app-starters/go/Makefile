@@ -5,7 +5,7 @@ COMMIT:=$(shell git log -n 1 --pretty=format:"%H" 2>/dev/null | head -c 10)
 PACKAGES:=$(shell go list ./... | grep -v /vendor/)
 GO_LINUX := GOOS=linux GOARCH=amd64
 GO_OSX := GOOS=darwin GOARCH=amd64
-GO_WIN := GOOS=darwin GOARCH=amd64
+GO_WIN := GOOS=windows GOARCH=amd64
 VER := 1.0
 LDFLAGS := '-s -w'
 
