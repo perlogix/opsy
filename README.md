@@ -17,7 +17,7 @@ Quickly bootstrap your Linux servers and applications with hardening basics, sec
 
 ## Overview
 
-`app-starters` - Docker container templates for bootstrapping applications with basic build/test, linting, secrets detection, and security scanning stages.  A basic build-run start.sh script for streamlined local development and small deployments. See start.sh section below.
+`app-starters` - Docker container templates for bootstrapping applications with basic build/test, linting, secrets detection, and security scanning stages. A basic build-run start.sh script for streamlined local development and small deployments. See start.sh section below.
 
 `vagrant-envs` - General Vagrantfiles for Linux VMs with basic setup, including a [k3s](https://github.com/k3s-io/k3s) environment loaded for local Kubernetes development.
 
@@ -28,10 +28,11 @@ Quickly bootstrap your Linux servers and applications with hardening basics, sec
 ## Getting Started
 
 ### app-starter
-  - Copy project language files to your project
-  - Update Docker build stage to incorporate any changes needed for building and testing your application
-  - Include any build-run steps in the start.sh script
-  - Update README.md
+
+- Copy project language files to your project
+- Update Docker build stage to incorporate any changes needed for building and testing your application
+- Include any build-run steps in the start.sh script
+- Update README.md
 
 ### start.sh
 
@@ -43,50 +44,56 @@ Slack messages will appear as such:
 
 ![Slack Message](https://perlogix.com/assets/images/opsy-slack.png "Slack Message")
 
-
 **Build Docker Container**
+
 ```sh
 ./start.sh build
 ```
 
 **Run Docker Container**
+
 ```sh
 ./start.sh run
 ```
 
 **Clean Docker System**
+
 ```sh
 ./start.sh clean
 ```
 
 **Make Self-Signed Cert**
+
 ```sh
 ./start.sh mkcert
 ```
 
 **Custom run by uncommenting the function calls at the bottom of the start.sh script.**
+
 ```sh
 ./start.sh
 ```
 
 ### linux-ops
-  - Install and execute the install.sh, which will install and run the maintenance.sh, quick-secure.sh, and server-setup.sh scripts on your Linux system.
-  - If you only want one of the scripts, copy the main branch's raw file onto your server and execute it.
+
+- Install and execute the install.sh, which will install and run the maintenance.sh, quick-secure.sh, and server-setup.sh scripts on your Linux system.
+- If you only want one of the scripts, copy the main branch's raw file onto your server and execute it.
 
 ```sh
 curl -LO https://raw.githubusercontent.com/perlogix/opsy/main/linux-ops/install.sh && chmod 0755 ./install.sh && ./install.sh
 ```
 
 ### vagrant-envs
-  - Clone repo and cd to vagrant-envs
-  - Run `vagrant up`
-  - SSH via `vagrant ssh`
+
+- Clone repo and cd to vagrant-envs
+- Run `vagrant up`
+- SSH via `vagrant ssh`
 
 <p align="right">(<a href="#top">back to top</a>)</p><br>
 
 ## Configurations
 
-The majority of the defaults in the files in the project are meant to be as unopinionated as possible. The server-setup.sh script has the most opinions for setting up a Linux box. Some of the configurations like sysctl might be too aggressive depending on the environment and compliance controls you need. Throughout this project, some of the default sets are not for everyone but should be easy to change with minimal understanding of shell, Linux, and Docker.
+The majority of the defaults in the files of the project are meant to be as unopinionated as possible. The server-setup.sh script has the most opinions for setting up a Linux box. Some of the configurations like sysctl might be too aggressive depending on the environment and compliance controls you need. Throughout this project, some of the default sets are not for everyone but should be easy to change with minimal understanding of shell, Linux, and Docker.
 
 ### k3s vagrant-env
 
@@ -94,12 +101,11 @@ When starting the vagrant box it will expose an insecure Kubernetes dashboard to
 
 ### install.sh
 
-This script also installs [cmon](https://github.com/perlogix/cmon) if you do not plan to send system informations and metrics to an Elasticsearch cluster this can be removed. If you're interested to learn more you can see more information on the project page.
+This script also installs [cmon](https://github.com/perlogix/cmon). If you do not plan to send system information and metrics to an ElasticSearch cluster, this can be removed. If you're interested in learning more, you can see more information on the project page.
 
 <p align="right">(<a href="#top">back to top</a>)</p><br>
 
 ## Contributing
-
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/feature_a`)
